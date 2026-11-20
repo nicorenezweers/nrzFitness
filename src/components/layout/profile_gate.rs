@@ -56,7 +56,7 @@ pub fn ProfileGate(children: Element) -> Element {
 fn Splash() -> Element {
     rsx! {
         div { class: "flex h-full items-center justify-center",
-            div { class: "flex size-14 animate-pulse items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground", "F" }
+            crate::components::ui::logo::Logo { class: "size-16 animate-pulse" }
         }
     }
 }
@@ -111,7 +111,7 @@ pub fn Onboarding() -> Element {
         div { class: "h-full overflow-y-auto",
             div { class: "mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2.5rem)]",
                 div { class: "flex flex-col gap-3",
-                    div { class: "flex size-14 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground", "F" }
+                    crate::components::ui::logo::Logo { class: "size-16" }
                     h1 { class: "text-3xl font-bold tracking-tight", "Willkommen bei nrzFitness" }
                     p { class: "text-muted-foreground",
                         "Ernährung, Training, Körper und Gesundheit – privat auf deinem Server. Ein paar Angaben, dann berechnen wir deine Ziele."

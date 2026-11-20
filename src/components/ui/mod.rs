@@ -5,6 +5,7 @@ pub mod button;
 pub mod card;
 pub mod date_nav;
 pub mod empty;
+pub mod logo;
 pub mod field;
 pub mod ring;
 pub mod segmented;

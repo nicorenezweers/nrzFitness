@@ -55,7 +55,13 @@ fn to_food(p: &Value) -> Option<FoodInput> {
     let liquid = |t: &str| t.contains("ml") || t.contains("cl") || t.ends_with(" l") || t.ends_with("0l");
     let unit = if liquid(&quantity) || liquid(&serving_txt) { "ml" } else { "g" };
     let serving = f(p, "serving_quantity");
-    let brand = s(p, "brands").map(|b| b.split(',').next().unwrap_or("").trim().to_string()).filter(|b| !b.is_empty());
+    // `brands`: Text "A, B" (klassische API) oder Liste (Suche).
+    let brand = match p.get("brands") {
+        Some(Value::Array(a)) => a.first().and_then(Value::as_str).map(String::from),
+        _ => s(p, "brands").map(|b| b.split(',').next().unwrap_or("").to_string()),
+    }
+    .map(|b| b.trim().to_string())
+    .filter(|b| !b.is_empty());
     Some(FoodInput {
         name,
         brand,
@@ -77,14 +83,65 @@ fn to_food(p: &Value) -> Option<FoodInput> {
     })
 }
 
+/// Kurzzeit-Cache für Suchanfragen (OFF begrenzt die Anfragen pro Minute).
+fn cache() -> &'static std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<FoodInput>)>> {
+    static C: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<FoodInput>)>>> =
+        std::sync::OnceLock::new();
+    C.get_or_init(Default::default)
+}
+
 pub async fn search(q: &str) -> AppResult<Vec<FoodInput>> {
     let q = q.trim();
     if q.chars().count() < 2 {
         return Ok(Vec::new());
     }
-    let url = format!("{}/cgi/search.pl", base());
+    let key = q.to_lowercase();
+    if let Ok(c) = cache().lock()
+        && let Some((t, v)) = c.get(&key)
+        && t.elapsed() < Duration::from_secs(900)
+    {
+        return Ok(v.clone());
+    }
+    // Neue Such-API zuerst, klassische als Ausweichlösung.
+    let mut result = search_new(q).await;
+    if result.as_ref().map(|v| v.is_empty()).unwrap_or(true) {
+        if let Ok(v) = search_classic(q).await {
+            result = Ok(v);
+        }
+    }
+    let mut out = result?;
+    out.dedup_by(|a, b| a.name == b.name && a.brand == b.brand);
+    if let Ok(mut c) = cache().lock() {
+        if c.len() > 500 {
+            c.clear();
+        }
+        c.insert(key, (std::time::Instant::now(), out.clone()));
+    }
+    Ok(out)
+}
+
+fn unreachable(e: impl std::fmt::Display) -> AppError {
+    AppError::Http(format!("Open Food Facts nicht erreichbar ({e})"))
+}
+
+async fn search_new(q: &str) -> AppResult<Vec<FoodInput>> {
+    let url = std::env::var("OFF_SEARCH_URL").unwrap_or_else(|_| "https://search.openfoodfacts.org".into());
     let res = client()?
-        .get(url)
+        .get(format!("{url}/search"))
+        .query(&[("q", q), ("page_size", "30"), ("langs", "de,en,fr"), ("fields", FIELDS)])
+        .send()
+        .await
+        .map_err(unreachable)?;
+    if !res.status().is_success() {
+        return Err(AppError::Http(format!("Open Food Facts ist gerade überlastet (HTTP {})", res.status().as_u16())));
+    }
+    let v: Value = res.json().await.map_err(unreachable)?;
+    Ok(v.get("hits").and_then(Value::as_array).map(|a| a.iter().filter_map(to_food).collect()).unwrap_or_default())
+}
+
+async fn search_classic(q: &str) -> AppResult<Vec<FoodInput>> {
+    let res = client()?
+        .get(format!("{}/cgi/search.pl", base()))
         .query(&[
             ("search_terms", q),
             ("search_simple", "1"),
@@ -95,15 +152,12 @@ pub async fn search(q: &str) -> AppResult<Vec<FoodInput>> {
         ])
         .send()
         .await
-        .map_err(|e| AppError::Http(format!("Open Food Facts nicht erreichbar: {e}")))?;
+        .map_err(unreachable)?;
     if !res.status().is_success() {
-        return Err(AppError::Http(format!("Open Food Facts: HTTP {}", res.status())));
+        return Err(AppError::Http(format!("Open Food Facts ist gerade überlastet (HTTP {})", res.status().as_u16())));
     }
-    let v: Value = res.json().await.map_err(|e| AppError::Http(e.to_string()))?;
-    let mut out: Vec<FoodInput> =
-        v.get("products").and_then(Value::as_array).map(|a| a.iter().filter_map(to_food).collect()).unwrap_or_default();
-    out.dedup_by(|a, b| a.name == b.name && a.brand == b.brand);
-    Ok(out)
+    let v: Value = res.json().await.map_err(unreachable)?;
+    Ok(v.get("products").and_then(Value::as_array).map(|a| a.iter().filter_map(to_food).collect()).unwrap_or_default())
 }
 
 pub async fn barcode(code: &str) -> AppResult<Option<FoodInput>> {
@@ -116,7 +170,7 @@ pub async fn barcode(code: &str) -> AppResult<Option<FoodInput>> {
         .get(url)
         .send()
         .await
-        .map_err(|e| AppError::Http(format!("Open Food Facts nicht erreichbar: {e}")))?;
+        .map_err(unreachable)?;
     if res.status() == reqwest::StatusCode::NOT_FOUND {
         return Ok(None);
     }

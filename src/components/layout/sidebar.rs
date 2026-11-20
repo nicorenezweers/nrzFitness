@@ -17,7 +17,7 @@ pub fn Sidebar() -> Element {
     rsx! {
         aside { class: "hidden w-60 shrink-0 flex-col border-r bg-sidebar/40 lg:flex",
             div { class: "flex items-center gap-2.5 px-5 pb-3 pt-5",
-                div { class: "flex size-8 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground", "F" }
+                crate::components::ui::logo::Logo { class: "size-8" }
                 span { class: "text-[15px] font-semibold tracking-tight", "nrzFitness" }
             }
             div { class: "px-3 pb-2", ProfileButton {} }

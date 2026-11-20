@@ -72,7 +72,7 @@ fn FoodSheetInner(date: chrono::NaiveDate, meal: String) -> Element {
             return None;
         }
         sleep_ms(650).await;
-        Some(search_foods(pid, q, true).await.map(|r| r.online).map_err(|e| e.to_string()))
+        Some(search_foods(pid, q, true).await.map(|r| r.online).map_err(crate::state::clean_err))
     });
     let lists = use_resource(move || async move {
         let pid = app.pid_tracked();

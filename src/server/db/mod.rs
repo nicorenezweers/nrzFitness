@@ -6,6 +6,7 @@ pub mod cycle;
 pub mod diary;
 pub mod fasting;
 pub mod foods;
+pub mod foods_seed;
 pub mod meds;
 pub mod profile;
 pub mod reports;

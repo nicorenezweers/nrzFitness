@@ -57,9 +57,7 @@ impl AppCtx {
     }
 
     pub fn error(&mut self, msg: impl std::fmt::Display) {
-        let m = msg.to_string();
-        let m = m.strip_prefix("error running server function: ").unwrap_or(&m).to_string();
-        self.toast.set(Some((m, true)));
+        self.toast.set(Some((clean_err(msg), true)));
     }
 
     pub fn open_food(&mut self, date: NaiveDate, meal: impl Into<String>) {
@@ -70,4 +68,12 @@ impl AppCtx {
 /// Aktives Profil im Browser merken.
 pub fn remember_profile(id: &str) {
     let _ = document::eval(&format!("localStorage.setItem('nrzfitness.profile', {});", serde_json::json!(id)));
+}
+
+/// Fehlertext ohne technische Präfixe von Server-Funktionen.
+pub fn clean_err(e: impl std::fmt::Display) -> String {
+    let m = e.to_string();
+    let m = m.strip_prefix("error running server function: ").unwrap_or(&m);
+    let m = m.split(" (details:").next().unwrap_or(m);
+    m.trim().to_string()
 }

@@ -208,7 +208,7 @@ pub async fn delete_water(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<(
 pub async fn day(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult<DayData> {
     let entries = entries(pool, pid, date).await?;
     let water = water(pool, pid, date).await?;
-    let water_ml = water.iter().map(|w| w.ml).sum();
+    let water_ml = water.iter().map(|w| w.ml).sum::<f64>() + 0.0;
     let (burned_kcal, exercise_min, exercise_count): (f64, f64, i64) = sqlx::query_as(
         "SELECT IFNULL(SUM(kcal),0.0), IFNULL(SUM(duration_min),0.0), COUNT(*) FROM exercise_entries
          WHERE profile_id = ? AND date = ?",

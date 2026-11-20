@@ -175,10 +175,13 @@ fn AmountSheet(
     let n = if fixed_amount { base.per100 } else { scale(&base.per100, a) };
     let unit = base.unit.clone();
     let serving = base.serving_size;
-    let serving_label = base.serving_name.clone().unwrap_or_else(|| format!("Portion ({} {unit})", num(serving, 0)));
-    let mut presets: Vec<(String, String)> = vec![(num(serving, 1), format!("1 × {}", serving_label))];
+    let serving_label = match base.serving_name.clone() {
+        Some(n) => format!("{n} ({} {unit})", num(serving, 0)),
+        None => format!("1 Portion ({} {unit})", num(serving, 0)),
+    };
+    let mut presets: Vec<(String, String)> = vec![(num(serving, 1), serving_label)];
     if serving > 0.0 && (serving - 100.0).abs() > 0.1 {
-        presets.push((num(serving * 2.0, 1), format!("2 × {}", num(serving, 0))));
+        presets.push((num(serving * 2.0, 1), format!("2 × {} {unit}", num(serving, 0))));
         presets.push(("100".into(), format!("100 {unit}")));
     }
     for v in [50.0, 150.0, 200.0, 250.0] {

@@ -69,7 +69,7 @@ pub fn TodayPage() -> Element {
             },
             PageHeader { title, subtitle: fmt_long(date) }
             WeekStrip { date, onchange: move |d| app.date.set(d) }
-            div { class: "grid gap-4 px-4 pb-8 pt-2 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start",
+            div { class: "grid grid-cols-[minmax(0,1fr)] gap-4 px-4 pb-8 pt-2 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start",
                 if let Some(e) = err {
                     Card { class: "p-4 text-sm text-destructive lg:col-span-2", "Fehler: {e}" }
                 }
@@ -79,12 +79,12 @@ pub fn TodayPage() -> Element {
                         Skeleton { class: "h-40 rounded-2xl" }
                     },
                     Some(d) => rsx! {
-                        div { class: "flex flex-col gap-4",
+                        div { class: "flex min-w-0 flex-col gap-4",
                             SummaryCard { d: d.clone(), g: g.clone() }
-                            ActivityGrid { d: d.clone(), g: g.clone() }
                             WaterCard { d: d.clone(), g: g.clone(), date, onchange: move |_| day.restart() }
+                            div { class: "hidden lg:block", ActivityGrid { d: d.clone(), g: g.clone() } }
                         }
-                        div { class: "flex flex-col gap-3",
+                        div { class: "flex min-w-0 flex-col gap-3",
                             for (k, l) in MEALS {
                                 MealCard {
                                     key: "{k}",
@@ -96,6 +96,7 @@ pub fn TodayPage() -> Element {
                                 }
                             }
                             NutrientDetails { d: d.clone(), g: g.clone() }
+                            div { class: "lg:hidden", ActivityGrid { d: d.clone(), g: g.clone() } }
                         }
                     },
                 }
@@ -233,14 +234,20 @@ fn WaterCard(d: DayData, g: Goals, date: NaiveDate, onchange: EventHandler<()>) 
                     Plus { class: "size-4" } "250"
                 }
             }
-            div { class: "mt-3 flex flex-wrap gap-1.5",
-                for i in 0..glasses.max(filled) {
-                    button {
-                        key: "{i}",
-                        class: "h-8 flex-1 basis-[calc(12.5%-0.4rem)] rounded-lg transition-colors active:scale-90",
-                        class: if i < filled { "bg-water" } else { "bg-muted" },
-                        "aria-label": "Glas {i + 1}",
-                        onclick: move |_| { if i >= filled { add(250.0 * (i + 1 - filled) as f64) } },
+            {
+                let n = glasses.max(filled);
+                let cols = if n > 8 { n.div_ceil(2) } else { n };
+                rsx! {
+                    div { class: "mt-3 grid gap-1.5", style: "grid-template-columns: repeat({cols}, minmax(0, 1fr));",
+                        for i in 0..n {
+                            button {
+                                key: "{i}",
+                                class: "h-9 rounded-lg transition-all active:scale-90",
+                                class: if i < filled { "bg-water" } else { "bg-muted" },
+                                "aria-label": "Glas {i + 1}",
+                                onclick: move |_| { if i >= filled { add(250.0 * (i + 1 - filled) as f64) } },
+                            }
+                        }
                     }
                 }
             }
@@ -251,7 +258,7 @@ fn WaterCard(d: DayData, g: Goals, date: NaiveDate, onchange: EventHandler<()>) 
 #[component]
 fn MealCard(meal: &'static str, label: &'static str, entries: Vec<FoodEntry>, date: NaiveDate, onedit: EventHandler<FoodEntry>) -> Element {
     let mut app = use_app();
-    let kcal: f64 = entries.iter().map(|e| e.kcal).sum();
+    let kcal: f64 = entries.iter().map(|e| e.kcal).sum::<f64>() + 0.0;
     let p: f64 = entries.iter().map(|e| e.protein).sum();
     let c: f64 = entries.iter().map(|e| e.carbs).sum();
     let f: f64 = entries.iter().map(|e| e.fat).sum();
