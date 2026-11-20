@@ -1,0 +1,11 @@
+[application]
+name = "nrzfitness"
+
+[web.app]
+title = "nrzFitness"
+
+[web.resource]
+dev = []
+
+[serve]
+fullstack = true
