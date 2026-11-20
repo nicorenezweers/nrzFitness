@@ -1,6 +1,5 @@
 //! Einstellungen → Daten: JSON-Sicherung exportieren/importieren, CSV-Export.
 // DataCard wird in den Einstellungen eingebunden; bis dahin sonst „unbenutzt“.
-#![allow(dead_code)]
 
 use dioxus::prelude::*;
 use icons::{ChevronRight, Database, FileJson, FileSpreadsheet, LoaderCircle, Upload};

@@ -83,7 +83,7 @@ pub fn SettingsPage() -> Element {
                 }
             }
             Section { title: "Daten",
-                // DATA_CARD
+                crate::domain::reports::data_card::DataCard {}
             }
             Section { title: "Über",
                 Card { class: "flex flex-col gap-1 p-4 text-sm",
