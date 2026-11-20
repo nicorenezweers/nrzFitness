@@ -867,7 +867,7 @@ mod tests {
         use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
         let opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap().foreign_keys(true);
         let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.unwrap();
-        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        crate::server::migrations::run(&pool).await.unwrap();
         seed_exercises(&pool).await.unwrap();
         seed_exercises(&pool).await.unwrap(); // idempotent
         sqlx::query("INSERT INTO profiles (id, name, created_at) VALUES ('p1', 'Test', '2026-01-01T00:00:00')")

@@ -2,6 +2,7 @@
 
 pub mod ai;
 pub mod db;
+pub mod migrations;
 pub mod off;
 
 use std::sync::OnceLock;
@@ -64,7 +65,7 @@ pub async fn init_db() -> SqlitePool {
         .foreign_keys(true)
         .journal_mode(SqliteJournalMode::Wal);
     let pool = SqlitePoolOptions::new().max_connections(5).connect_with(opts).await.expect("Datenbank nicht erreichbar");
-    sqlx::migrate!("./migrations").run(&pool).await.expect("Migrationen fehlgeschlagen");
+    crate::server::migrations::run(&pool).await.expect("Migrationen fehlgeschlagen");
     if let Err(e) = db::seed::run(&pool).await {
         tracing::warn!("Startdaten: {e}");
     }

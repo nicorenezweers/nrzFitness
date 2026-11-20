@@ -22,3 +22,6 @@ dioxus_ui_internals/
 *.db
 *.db-shm
 *.db-wal
+
+# Von build.rs erzeugt (Theme steht in build.rs)
+style/tailwind.css

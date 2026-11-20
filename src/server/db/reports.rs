@@ -658,7 +658,7 @@ mod tests {
     async fn mem_pool() -> SqlitePool {
         let opts = SqliteConnectOptions::from_str("sqlite::memory:").expect("url").foreign_keys(true);
         let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.expect("pool");
-        sqlx::migrate!("./migrations").run(&pool).await.expect("migrate");
+        crate::server::migrations::run(&pool).await.expect("migrate");
         pool
     }
 

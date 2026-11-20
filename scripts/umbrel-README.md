@@ -9,4 +9,4 @@ Dieser Zweig enthaelt nur fertige Dateien fuer die App `nrz-fitness` im nrzStore
 | `SHA256SUMS` | Pruefsummen |
 
 `hooks/pre-start` der App laedt sie per Tag `umbrel-<version>`. Erstellt mit
-`scripts/umbrel-release.sh` auf dem Zweig `main`.
+`scripts/umbrel-release` auf dem Zweig `main`.

@@ -1,4 +1,22 @@
--- nrzFitness: komplettes Schema. Datumsfelder als TEXT 'YYYY-MM-DD', Zeitstempel 'YYYY-MM-DDTHH:MM:SS'.
+//! Datenbank-Schema als eingebettete Migrationen (byte-genau wie die früheren `migrations/*.sql`,
+//! damit bestehende Datenbanken die Prüfsummen wiedererkennen). Neue Änderungen: neuen Eintrag
+//! ans Ende von `MIGRATIONS` anhängen, bestehende nie verändern.
+
+use std::borrow::Cow;
+use std::future::Future;
+use std::pin::Pin;
+
+use sqlx::error::BoxDynError;
+use sqlx::migrate::{Migration, MigrationSource, MigrationType, Migrator};
+
+/// (Version, Beschreibung, SQL)
+pub const MIGRATIONS: &[(i64, &str, &str)] = &[
+    (20261120000000, "init", INIT),
+    (20261121000000, "training", TRAINING),
+    (20261122000000, "ai", AI),
+];
+
+const INIT: &str = r#"-- nrzFitness: komplettes Schema. Datumsfelder als TEXT 'YYYY-MM-DD', Zeitstempel 'YYYY-MM-DDTHH:MM:SS'.
 
 CREATE TABLE profiles (
     id             TEXT PRIMARY KEY,
@@ -215,3 +233,76 @@ CREATE TABLE cycle_days (
     flow       INTEGER NOT NULL DEFAULT 2,              -- 1 leicht, 2 mittel, 3 stark
     PRIMARY KEY (profile_id, date)
 );
+"#;
+
+const TRAINING: &str = r#"-- Training: Vorlagen (Routinen) und Indizes für Verlauf/Rekorde.
+
+CREATE TABLE workout_templates (
+    id         TEXT PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    notes      TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX idx_workout_templates_profile ON workout_templates(profile_id);
+
+-- Übung in einer Vorlage mit Ziel-Sätzen (Kraft) bzw. Ziel-Dauer (Cardio usw.).
+CREATE TABLE workout_template_items (
+    id           TEXT PRIMARY KEY,
+    template_id  TEXT NOT NULL REFERENCES workout_templates(id) ON DELETE CASCADE,
+    exercise_id  TEXT NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+    position     INTEGER NOT NULL DEFAULT 0,
+    sets         INTEGER NOT NULL DEFAULT 3,
+    reps         INTEGER NOT NULL DEFAULT 10,
+    weight_kg    REAL NOT NULL DEFAULT 0,
+    duration_min REAL NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_workout_template_items ON workout_template_items(template_id, position);
+
+CREATE INDEX idx_exercise_entries_exercise ON exercise_entries(profile_id, exercise_id, date);
+CREATE INDEX idx_exercise_sets_entry ON exercise_sets(entry_id, position);
+CREATE INDEX idx_exercises_profile ON exercises(profile_id);
+"#;
+
+const AI: &str = r#"-- Einstellungen der ganzen Installation (Schlüssel → JSON), z.B. der KI-Assistent.
+CREATE TABLE app_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+"#;
+
+/// Quelle für `sqlx::migrate::Migrator` aus den eingebetteten Migrationen.
+#[derive(Debug)]
+struct Embedded;
+
+impl MigrationSource<'static> for Embedded {
+    fn resolve(self) -> Pin<Box<dyn Future<Output = Result<Vec<Migration>, BoxDynError>> + Send + 'static>> {
+        Box::pin(async {
+            Ok(MIGRATIONS
+                .iter()
+                .map(|(v, d, sql)| Migration::new(*v, Cow::Borrowed(*d), MigrationType::Simple, Cow::Borrowed(*sql), false))
+                .collect())
+        })
+    }
+}
+
+/// Alle Migrationen auf die Datenbank anwenden.
+pub async fn run(pool: &sqlx::SqlitePool) -> Result<(), sqlx::migrate::MigrateError> {
+    Migrator::new(Embedded).await?.run(pool).await
+}
+
+#[cfg(test)]
+mod tests {
+    use sha2::Digest;
+
+    /// Prüfsummen der bisher ausgelieferten Migrationen (SHA-384) dürfen sich nie ändern.
+    #[test]
+    fn checksums_unchanged() {
+        let expected = ["f6735b05a616a910afedaf60afd2a3d6958e7ac68fa97e22a4a4c843e8c47e7dabd655f7d1c613f50fc9df833d6de7f2", "049d114448b0ed4c8ac2a42f854a3f6b5c065cc7b4e6c73f50e582fd5e575dc37ef5362926a71ecb476eeffdc214ead9", "5228d1c83df56c4d5305425918579869902e7d4f160b47d8575965fc695905ddf416fb0e8f24342ef30f1364af67d1d8"];
+        for ((_, _, sql), want) in super::MIGRATIONS.iter().zip(expected) {
+            let got: String = sha2::Sha384::digest(sql.as_bytes()).iter().map(|b| format!("{b:02x}")).collect();
+            assert_eq!(got, want);
+        }
+    }
+}

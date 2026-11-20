@@ -110,7 +110,7 @@ pub(crate) async fn test_pool() -> (SqlitePool, String) {
     use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
     let opts = SqliteConnectOptions::from_str("sqlite::memory:").expect("url").foreign_keys(true);
     let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.expect("pool");
-    sqlx::migrate!("./migrations").run(&pool).await.expect("migrate");
+    crate::server::migrations::run(&pool).await.expect("migrate");
     let p = super::profile::create(
         &pool,
         crate::model::ProfileInput { name: "Test".into(), sex: "f".into(), cycle_tracking: true, ..Default::default() },

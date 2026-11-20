@@ -1,4 +1,9 @@
-@import "tailwindcss";
+//! Erzeugt `style/tailwind.css` (Eingabe für die Tailwind-CLI) aus dem Theme unten.
+//! Das nrzUI-Theme lebt so im Rust-Code; die erzeugte Datei ist in `.gitignore`.
+
+use std::path::Path;
+
+const TAILWIND_INPUT: &str = r##"@import "tailwindcss";
 @source "../src/**/*.rs";
 
 @custom-variant dark (&:is(.dark *));
@@ -187,3 +192,13 @@ input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 
 html:not(.dark) { background: oklch(1 0 0); }
+"##;
+
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    let path = Path::new("style/tailwind.css");
+    if std::fs::read_to_string(path).ok().as_deref() != Some(TAILWIND_INPUT) {
+        let _ = std::fs::create_dir_all("style");
+        std::fs::write(path, TAILWIND_INPUT).expect("style/tailwind.css schreiben");
+    }
+}

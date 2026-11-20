@@ -35,7 +35,7 @@ Umgebung: `DATABASE_URL` (Standard `sqlite://data/nrzfitness.db`), `PORT`, `OFF_
 
 ## Umbrel
 
-App `nrz-fitness` im nrzStore (Port 8630). Release: `./scripts/umbrel-release.sh <version> "Notizen"` –
+App `nrz-fitness` im nrzStore (Port 8630). Release: `./scripts/umbrel-release <version> "Notizen"` –
 baut amd64/arm64, legt die Dateien auf den Zweig `umbrel` und pusht den Tag `umbrel-<version>`;
 nrzGit aktualisiert den Store über `nrzStore.json`.
 
