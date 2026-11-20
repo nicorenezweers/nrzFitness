@@ -7,7 +7,7 @@
   "manifest": {
     "name": "nrzFitness",
     "tagline": "Ernaehrung, Training, Koerper, Fasten und Gesundheit - privat und fuers Handy gemacht",
-    "icon": "http://100.78.107.162:8390/nicorenezweers/nrzStore/raw/branch/main/nrz-fitness/icon.png",
+    "icon": "https://git.zweers.ch/nicorenezweers/nrzStore/raw/branch/main/nrz-fitness/icon.png",
     "port": 8630
   }
 }
