@@ -62,6 +62,8 @@ pub fn App() -> Element {
 
     rsx! {
         document::Title { "nrzFitness" }
+        // Dunkles Thema vor dem ersten Zeichnen setzen (kein weisses Aufblitzen).
+        document::Script { "if (localStorage.getItem('darkmode') !== 'false') document.documentElement.classList.add('dark');" }
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "apple-touch-icon", href: APPLE_ICON }
         document::Link { rel: "manifest", href: MANIFEST }

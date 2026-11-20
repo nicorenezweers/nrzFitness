@@ -85,7 +85,7 @@ pub fn BodyPage() -> Element {
                         CardHeader { title: "Gewichtsverlauf",
                             action: rsx! {
                                 Segmented {
-                                    class: "w-auto",
+                                    class: "w-44 shrink-0",
                                     options: vec![("30".into(), "30T".into()), ("90".into(), "90T".into()), ("365".into(), "1J".into())],
                                     value: range(),
                                     onchange: move |v| range.set(v),

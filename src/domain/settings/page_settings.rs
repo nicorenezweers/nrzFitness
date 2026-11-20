@@ -82,9 +82,7 @@ pub fn SettingsPage() -> Element {
                     Switch { checked: is_dark(), onchange: move |v| is_dark.set(v) }
                 }
             }
-            Section { title: "Daten",
-                crate::domain::reports::data_card::DataCard {}
-            }
+            crate::domain::reports::data_card::DataCard {}
             Section { title: "Über",
                 Card { class: "flex flex-col gap-1 p-4 text-sm",
                     p { span { class: "font-semibold", "nrzFitness " } span { class: "text-muted-foreground", "v{env!(\"CARGO_PKG_VERSION\")}" } }

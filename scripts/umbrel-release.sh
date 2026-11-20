@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baut nrzPlan fuer umbrelOS (Linux amd64 + arm64), legt die fertigen Dateien auf den Zweig
+# Baut nrzFitness fuer umbrelOS (Linux amd64 + arm64), legt die fertigen Dateien auf den Zweig
 # `umbrel` und pusht den Tag `umbrel-<version>`. nrzGit traegt die Version dann per nrzStore.json
 # selbst im nrzStore ein (RELEASE in hooks/pre-start, version, releaseNotes, Store-Version).
 #
@@ -10,7 +10,7 @@
 set -euo pipefail
 
 VERSION="${1:?Version fehlt, z.B. 1.0.1}"
-NOTES="${2:-nrzPlan ${VERSION}}"
+NOTES="${2:-nrzFitness ${VERSION}}"
 TAG="umbrel-${VERSION}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
@@ -46,21 +46,21 @@ WDIR="$(dirname "${WRAP}")"
 OUT="$(mktemp -d)"
 LISTS="$(mktemp -d)"
 trap 'rm -rf "${OUT}" "${LISTS}"' EXIT
-WEB="target/dx/nrzplan/release/web"
+WEB="target/dx/nrzfitness/release/web"
 
 build() { # <rust-target> <arch>
   local triple="$1" arch="$2" up cc
   up="$(echo "${triple}" | tr 'a-z-' 'A-Z_')"
   cc="$(ls "${WDIR}"/zigcc-"${triple}".2.31-*.sh | head -1)"
   echo "==> Baue ${arch} (${triple})"
-  rm -rf target/dx/nrzplan/release
+  rm -rf target/dx/nrzfitness/release
   env "CARGO_TARGET_${up}_LINKER=${cc}" "CC_${triple//-/_}=${cc}" "CC_${triple}=${cc}" \
     "AR_${triple//-/_}=${WDIR}/ar" "AR_${triple}=${WDIR}/ar" \
     "${DX}" bundle --platform web --fullstack --release @server --target "${triple}" --platform server --features server
   # Ohne `--platform server` uebernimmt dx beim eigenen @server-Target das Client-Feature `web`
   # (dioxus-web) in den Server: der liefert dann keine Hydration-Daten fuer use_server_future
   # und jede Seite bricht im Browser mit "Cannot read properties of undefined" ab.
-  if ! strings "${WEB}/server" | grep -c "calendar.ics" >/dev/null; then
+  if ! strings "${WEB}/server" | grep -c "search.openfoodfacts.org" >/dev/null; then
     echo "Server-Binary fuer ${arch} enthaelt keinen Server-Teil – Abbruch." >&2
     exit 1
   fi
@@ -77,7 +77,7 @@ build() { # <rust-target> <arch>
     exit 1
   fi
   (cd "${WEB}/public" && find . -type f | sort) > "${LISTS}/${arch}.txt"
-  gzip -9 -c "${WEB}/server" > "${OUT}/nrzplan-${arch}.gz"
+  gzip -9 -c "${WEB}/server" > "${OUT}/nrzfitness-${arch}.gz"
 }
 
 echo "==> Tailwind"
@@ -91,7 +91,7 @@ if ! diff -q "${LISTS}/amd64.txt" "${LISTS}/arm64.txt" >/dev/null; then
   echo "Oberflaeche von amd64 und arm64 unterscheidet sich – Abbruch." >&2
   exit 1
 fi
-(cd "${OUT}" && shasum -a 256 nrzplan-amd64.gz nrzplan-arm64.gz public.tar.gz > SHA256SUMS)
+(cd "${OUT}" && shasum -a 256 nrzfitness-amd64.gz nrzfitness-arm64.gz public.tar.gz > SHA256SUMS)
 
 # Zweig `umbrel` in einem eigenen Worktree aktualisieren (nur fertige Dateien).
 WT="$(mktemp -d)"
@@ -107,7 +107,7 @@ git show HEAD:scripts/umbrel-README.md > "${WT}/README.md"
 (
   cd "${WT}"
   git add -A
-  git commit -qm "nrzPlan ${VERSION}: Umbrel-Paket"
+  git commit -qm "nrzFitness ${VERSION}: Umbrel-Paket"
   git tag -a "${TAG}" -m "${NOTES}"
   git push -q origin umbrel
   git push -q origin "${TAG}"

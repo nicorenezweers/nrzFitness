@@ -1,0 +1,13 @@
+{
+  "store": "nicorenezweers/nrzStore",
+  "app": "nrz-fitness",
+  "tagPrefix": "umbrel-",
+  "package": "umbrel",
+  "releaseNotes": "Erste Version: Ernaehrungstagebuch mit Open-Food-Facts-Suche und Barcode-Scanner, Training mit Saetzen, Vorlagen und Rekorden, Koerper-Check-in, Fasten-Timer, Zyklus, Medikamente und Symptome, Ziele mit Bedarfsrechner, Berichte, Profile und Datensicherung.",
+  "manifest": {
+    "name": "nrzFitness",
+    "tagline": "Ernaehrung, Training, Koerper, Fasten und Gesundheit - privat und fuers Handy gemacht",
+    "icon": "http://100.78.107.162:8390/nicorenezweers/nrzStore/raw/branch/main/nrz-fitness/icon.png",
+    "port": 8630
+  }
+}

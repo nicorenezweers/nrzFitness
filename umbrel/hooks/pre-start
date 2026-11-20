@@ -3,18 +3,18 @@ set -euo pipefail
 
 APP_DIR="${APP_DATA_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-# nrzPlan kommt ohne eigenes Image und ohne Registry-Login: Server und Oberflaeche liegen
-# im nrzPlan-Repo auf nrzGit auf diesem Geraet (Zweig `umbrel`, Tag unten, gebaut mit
+# nrzFitness kommt ohne eigenes Image und ohne Registry-Login: Server und Oberflaeche liegen
+# im nrzFitness-Repo auf nrzGit auf diesem Geraet (Zweig `umbrel`, Tag unten, gebaut mit
 # scripts/umbrel-release.sh). Beim ersten Start und nach Updates werden sie fuer die Architektur
 # dieses Geraets nach app/ geladen und geprueft; der Container (gepinntes debian:trixie-slim)
 # startet sie von dort.
 RELEASE="umbrel-1.0.0"
-BASE="http://localhost:8390/nicorenezweers/nrzPlan/raw/tag/${RELEASE}"
+BASE="http://localhost:8390/nicorenezweers/nrzFitness/raw/tag/${RELEASE}"
 
 case "$(uname -m)" in
   x86_64 | amd64) ARCH=amd64 ;;
   aarch64 | arm64) ARCH=arm64 ;;
-  *) echo "nrzPlan: unsupported architecture $(uname -m)" >&2; exit 1 ;;
+  *) echo "nrzFitness: unsupported architecture $(uname -m)" >&2; exit 1 ;;
 esac
 
 mkdir -p "${APP_DIR}/data"
@@ -31,16 +31,16 @@ download() {
     fi
   }
   fetch SHA256SUMS || return 1
-  for f in "nrzplan-${ARCH}.gz" public.tar.gz; do
+  for f in "nrzfitness-${ARCH}.gz" public.tar.gz; do
     fetch "$f" || return 1
   done
-  (cd "${TMP}" && grep -E " nrzplan-${ARCH}\.gz$| public\.tar\.gz$" SHA256SUMS | sha256sum -c --quiet -) || return 1
+  (cd "${TMP}" && grep -E " nrzfitness-${ARCH}\.gz$| public\.tar\.gz$" SHA256SUMS | sha256sum -c --quiet -) || return 1
 
   NEW="${APP_DIR}/app.new"
   rm -rf "${NEW}"
   mkdir -p "${NEW}/public"
-  gunzip -c "${TMP}/nrzplan-${ARCH}.gz" > "${NEW}/nrzplan"
-  chmod 755 "${NEW}/nrzplan"
+  gunzip -c "${TMP}/nrzfitness-${ARCH}.gz" > "${NEW}/nrzfitness"
+  chmod 755 "${NEW}/nrzfitness"
   tar -xzf "${TMP}/public.tar.gz" -C "${NEW}/public"
   chmod -R a+rX "${NEW}"
   echo "${RELEASE}-${ARCH}" > "${NEW}/.release"
@@ -54,10 +54,10 @@ download() {
 if [ "$(cat "${APP_DIR}/app/.release" 2>/dev/null || true)" != "${RELEASE}-${ARCH}" ]; then
   if ! download; then
     # nrzGit nicht erreichbar: mit dem bisherigen Programm weiterlaufen statt gar nicht zu starten
-    if [ -x "${APP_DIR}/app/nrzplan" ]; then
-      echo "nrzPlan: ${RELEASE} nicht von nrzGit (Port 8390) ladbar, bisherige Version bleibt" >&2
+    if [ -x "${APP_DIR}/app/nrzfitness" ]; then
+      echo "nrzFitness: ${RELEASE} nicht von nrzGit (Port 8390) ladbar, bisherige Version bleibt" >&2
     else
-      echo "nrzPlan: Programm nicht von nrzGit (Port 8390) ladbar - ist die App nrzGit installiert und gestartet?" >&2
+      echo "nrzFitness: Programm nicht von nrzGit (Port 8390) ladbar - ist die App nrzGit installiert und gestartet?" >&2
       exit 1
     fi
   fi

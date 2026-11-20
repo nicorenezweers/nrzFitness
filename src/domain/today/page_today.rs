@@ -114,7 +114,7 @@ fn WeekStrip(date: NaiveDate, onchange: EventHandler<NaiveDate>) -> Element {
     let start = week_start(date);
     let t = today();
     rsx! {
-        div { class: "flex items-center gap-1 px-2 pb-1 sm:px-6",
+        div { class: "flex w-full max-w-2xl items-center gap-1 px-2 pb-1 sm:px-6",
             button {
                 class: "flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground active:scale-90",
                 onclick: move |_| onchange.call(date - Duration::days(7)),
