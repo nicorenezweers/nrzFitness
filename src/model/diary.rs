@@ -61,14 +61,6 @@ impl Food {
             sodium_mg: self.sodium_mg * f,
         }
     }
-    pub fn subtitle(&self) -> String {
-        let mut parts = Vec::new();
-        if let Some(b) = self.brand.as_ref().filter(|b| !b.is_empty()) {
-            parts.push(b.clone());
-        }
-        parts.push(format!("{} kcal / 100 {}", self.kcal.round(), self.unit));
-        parts.join(" · ")
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
