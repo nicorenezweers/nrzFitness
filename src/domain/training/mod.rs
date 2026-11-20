@@ -1,1 +1,10 @@
+mod day;
+mod exercise_form;
+mod history;
+mod library;
+mod log_sheet;
 pub mod page_training;
+mod picker;
+mod rest_timer;
+mod shared;
+mod templates;
