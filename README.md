@@ -10,6 +10,9 @@ nrzUI-Thema), gebaut fürs Handy und mit voller Desktop-Ansicht. Nachbau von
   Schlaf, Gewicht, Fasten; Wochenleiste und Wischen zum Tageswechsel.
 - **Essen eintragen** – über 120 Basis-Lebensmittel, Open-Food-Facts-Suche, Barcode-Scanner (Kamera,
   BarcodeDetector bzw. ZXing auf iOS), Favoriten, Zuletzt, Mahlzeiten-Vorlagen, Schnelleintrag, „Wie gestern“.
+- **KI-Schätzung** – Mahlzeit fotografieren oder beschreiben; Claude, Grok, ChatGPT, Gemini, ein eigener
+  OpenAI-kompatibler Server (Ollama, OpenRouter) oder ein CLI-Befehl (z.B. `claude -p`) zerlegt sie in
+  Positionen mit Mengen und Nährwerten, korrigierbar per Satz. Einrichtung unter Einstellungen → KI-Assistent.
 - **Training** – über 100 Übungen, Sätze (Wdh × kg), Vorlagen, Ruhe-Timer, kcal über MET, Rekorde/1RM, Verlauf.
 - **Körper** – Check-in mit Gewicht, Körperfett, Umfängen, Schritten, Stimmung, Schlaf, Ruhepuls; Diagramme, BMI.
 - **Fasten** – Live-Timer mit Phasen, Presets, Verlauf und Statistik.

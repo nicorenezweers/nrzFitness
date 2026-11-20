@@ -2,6 +2,7 @@
 //! Jede Funktion bekommt die Profil-ID (`pid`) des aktiven Profils.
 #![allow(unused_imports)]
 
+pub mod ai;
 pub mod body;
 pub mod cycle;
 pub mod diary;

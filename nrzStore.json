@@ -3,7 +3,7 @@
   "app": "nrz-fitness",
   "tagPrefix": "umbrel-",
   "package": "umbrel",
-  "releaseNotes": "Erste Version: Ernaehrungstagebuch mit Open-Food-Facts-Suche und Barcode-Scanner, Training mit Saetzen, Vorlagen und Rekorden, Koerper-Check-in, Fasten-Timer, Zyklus, Medikamente und Symptome, Ziele mit Bedarfsrechner, Berichte, Profile und Datensicherung.",
+  "releaseNotes": "KI-Schaetzung: Mahlzeit fotografieren oder beschreiben, Claude, Grok, ChatGPT, Gemini, eigener Server oder CLI-Befehl schaetzt Positionen, Mengen und Naehrwerte; korrigierbar und mit einem Tipp eintragbar. Einrichtung unter Einstellungen > KI-Assistent.",
   "manifest": {
     "name": "nrzFitness",
     "tagline": "Ernaehrung, Training, Koerper, Fasten und Gesundheit - privat und fuers Handy gemacht",

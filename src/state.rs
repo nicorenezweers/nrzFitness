@@ -10,6 +10,8 @@ use crate::model::Profile;
 pub struct FoodSheetReq {
     pub date: NaiveDate,
     pub meal: String,
+    /// Direkt mit der KI-Schätzung (Foto) starten.
+    pub ai: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -61,7 +63,11 @@ impl AppCtx {
     }
 
     pub fn open_food(&mut self, date: NaiveDate, meal: impl Into<String>) {
-        self.food_sheet.set(Some(FoodSheetReq { date, meal: meal.into() }));
+        self.food_sheet.set(Some(FoodSheetReq { date, meal: meal.into(), ai: false }));
+    }
+
+    pub fn open_food_ai(&mut self, date: NaiveDate, meal: impl Into<String>) {
+        self.food_sheet.set(Some(FoodSheetReq { date, meal: meal.into(), ai: true }));
     }
 }
 

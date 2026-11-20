@@ -1,6 +1,6 @@
 use chrono::Timelike;
 use dioxus::prelude::*;
-use icons::{Dumbbell, GlassWater, Scale, Smile, Timer, Utensils};
+use icons::{Camera, Dumbbell, GlassWater, Scale, Smile, Timer, Utensils};
 
 use crate::api::diary::add_water;
 use crate::app::Route;
@@ -36,6 +36,18 @@ pub fn QuickSheet() -> Element {
                     span { class: "flex flex-col",
                         span { class: "font-semibold", "Essen eintragen" }
                         span { class: "text-xs opacity-70", "Suchen, scannen oder schnell erfassen" }
+                    }
+                }
+                button { class: "{tile} col-span-2 flex-row items-center",
+                    onclick: move |_| {
+                        close();
+                        let d = (app.date)();
+                        app.open_food_ai(d, meal_for_hour(chrono::Local::now().hour()));
+                    },
+                    span { class: "{icon} bg-kcal/20 text-kcal", Camera { class: "size-5" } }
+                    span { class: "flex flex-col",
+                        span { class: "font-semibold", "Foto / KI-Schätzung" }
+                        span { class: "text-xs text-muted-foreground", "Mahlzeit fotografieren oder beschreiben" }
                     }
                 }
                 button { class: tile,

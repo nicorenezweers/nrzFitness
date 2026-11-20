@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
-use icons::{Globe, Plus, ScanBarcode, Search, X, Zap};
+use icons::{Globe, Plus, ScanBarcode, Search, Sparkles, X, Zap};
 
+use super::ai_sheet::AiSheet;
 use super::amount_sheet::AddFoodSheet;
 use super::food_form::FoodFormSheet;
 use super::food_row::FoodRow;
@@ -23,6 +24,7 @@ enum Overlay {
     Form(Option<FoodInput>),
     Quick,
     Scan,
+    Ai,
 }
 
 /// Warten im Browser (für Entprellen der Suche).
@@ -35,16 +37,16 @@ async fn sleep_ms(ms: u32) {
 pub fn FoodSheet() -> Element {
     let app = use_app();
     let Some(req) = app.food_sheet.read().clone() else { return rsx! {} };
-    rsx! { FoodSheetInner { key: "{req.date}-{req.meal}", date: req.date, meal: req.meal } }
+    rsx! { FoodSheetInner { key: "{req.date}-{req.meal}-{req.ai}", date: req.date, meal: req.meal, ai: req.ai } }
 }
 
 #[component]
-fn FoodSheetInner(date: chrono::NaiveDate, meal: String) -> Element {
+fn FoodSheetInner(date: chrono::NaiveDate, meal: String, ai: bool) -> Element {
     let mut app = use_app();
     let mut meal = use_signal(|| meal);
     let mut query = use_signal(String::new);
     let mut tab = use_signal(|| "recent".to_string());
-    let mut overlay = use_signal(|| Overlay::None);
+    let mut overlay = use_signal(|| if ai { Overlay::Ai } else { Overlay::None });
     let mut added = use_signal(|| 0u32);
     let mut online_on = use_signal(|| true);
     let mut busy_code = use_signal(|| false);
@@ -209,6 +211,12 @@ fn FoodSheetInner(date: chrono::NaiveDate, meal: String) -> Element {
                         }
                     }
                     button {
+                        "aria-label": "Mit KI schätzen (Foto oder Text)",
+                        class: "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-kcal transition-transform active:scale-90",
+                        onclick: move |_| overlay.set(Overlay::Ai),
+                        Sparkles { class: "size-6" }
+                    }
+                    button {
                         "aria-label": "Barcode scannen",
                         class: "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground transition-transform active:scale-90",
                         onclick: move |_| overlay.set(Overlay::Scan),
@@ -371,6 +379,14 @@ fn FoodSheetInner(date: chrono::NaiveDate, meal: String) -> Element {
                 QuickEntrySheet { date, meal: meal(), onclose: move |_| overlay.set(Overlay::None), ondone: move |_| { added += 1; overlay.set(Overlay::None); } }
             },
             Overlay::Scan => rsx! { Scanner { onresult: on_code, onclose: move |_| overlay.set(Overlay::None) } },
+            Overlay::Ai => rsx! {
+                AiSheet {
+                    date,
+                    meal: meal(),
+                    onclose: move |_| { if ai && added() == 0 { close() } else { overlay.set(Overlay::None) } },
+                    ondone: move |n: usize| { added += n as u32; overlay.set(Overlay::None); if ai { close() } },
+                }
+            },
             Overlay::None => rsx! {},
         }
     }

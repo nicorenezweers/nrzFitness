@@ -1,5 +1,6 @@
 //! Server-only: Datenbank-Pool, Fehler, Open Food Facts.
 
+pub mod ai;
 pub mod db;
 pub mod off;
 

@@ -75,6 +75,9 @@ pub fn SettingsPage() -> Element {
                 }
                 p { class: "px-1 text-xs text-muted-foreground", "Jedes Profil hat eigene Einträge und Ziele. Lebensmittel können geteilt werden." }
             }
+            Section { title: "KI-Assistent",
+                crate::domain::settings::ai_card::AiCard {}
+            }
             Section { title: "Darstellung",
                 Card { class: "flex items-center gap-3 p-4",
                     if is_dark() { Moon { class: "size-5" } } else { Sun { class: "size-5" } }
