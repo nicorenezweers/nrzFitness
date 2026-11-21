@@ -3,7 +3,7 @@
   "app": "nrz-fitness",
   "tagPrefix": "umbrel-",
   "package": "umbrel",
-  "releaseNotes": "KI-Schaetzung: Mahlzeit fotografieren oder beschreiben, Claude, Grok, ChatGPT, Gemini, eigener Server oder CLI-Befehl schaetzt Positionen, Mengen und Naehrwerte; korrigierbar und mit einem Tipp eintragbar. Einrichtung unter Einstellungen > KI-Assistent.",
+  "releaseNotes": "Apple Health und Google Health Connect: Apple-Health-Export importieren (Schritte, Gewicht, Koerperfett, Schlaf, Ruhepuls, Trainings) und automatisch synchronisieren per Kurzbefehl, Health Auto Export oder Android-App; Tages-Naehrwerte zum Zurueckschreiben. Ziele: auch sehr ehrgeiziges Abnehmen bis -2 kg pro Woche, mit Info-Hinweis zum aerztlichen Rat.",
   "manifest": {
     "name": "nrzFitness",
     "tagline": "Ernaehrung, Training, Koerper, Fasten und Gesundheit - privat und fuers Handy gemacht",

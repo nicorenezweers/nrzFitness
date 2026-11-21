@@ -33,6 +33,6 @@ fn main() {
     dioxus::serve(|| async {
         dotenv::dotenv().ok();
         server::set_pool(server::init_db().await);
-        Ok(dioxus::server::router(App))
+        Ok(dioxus::server::router(App).merge(server::health::routes()))
     });
 }

@@ -154,6 +154,8 @@ fn WeekStrip(date: NaiveDate, onchange: EventHandler<NaiveDate>) -> Element {
 
 #[component]
 fn SummaryCard(d: DayData, g: Goals) -> Element {
+    let app = use_app();
+    let hint = crate::model::aggressive_goal(app.profile().as_ref(), d.weight, &g);
     let n = d.totals();
     let budget = g.calories + d.burned_kcal;
     let remaining = budget - n.kcal;
@@ -179,6 +181,9 @@ fn SummaryCard(d: DayData, g: Goals) -> Element {
                 MacroBar { label: "Protein", value: n.protein, goal: g.protein_g, color: "bg-protein" }
                 MacroBar { label: "Kohlenhydrate", value: n.carbs, goal: g.carbs_g, color: "bg-carbs" }
                 MacroBar { label: "Fett", value: n.fat, goal: g.fat_g, color: "bg-fat" }
+            }
+            if let Some(r) = hint {
+                crate::components::ui::goal_hint::GoalHint { reason: r, class: "mt-4" }
             }
         }
     }

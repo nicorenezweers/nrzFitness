@@ -6,7 +6,6 @@ use crate::components::layout::page::{PageBody, PageHeader, Section};
 use crate::components::ui::button::{Button, ButtonSize, ButtonVariant};
 use crate::components::ui::card::{Card, CardHeader};
 use crate::components::ui::field::{Field, NumberInput};
-use crate::components::ui::segmented::Segmented;
 use crate::components::ui::skeleton::Skeleton;
 use crate::model::{Goals, suggested_goals};
 use crate::state::use_app;
@@ -126,7 +125,11 @@ fn GoalsForm(goals: Goals, weight: Option<f64>) -> Element {
     };
 
     let weekly_v = parse_num(&weekly()).unwrap_or(0.0);
-    let weekly_key = if weekly_v < -0.6 { "-0.75" } else if weekly_v < -0.3 { "-0.5" } else if weekly_v < -0.1 { "-0.25" } else if weekly_v > 0.1 { "0.25" } else { "0" };
+    let hint = crate::model::aggressive_goal(
+        profile.as_ref(),
+        weight,
+        &Goals { calories: p(kcal), weekly_change: weekly_v, ..Default::default() },
+    );
 
     rsx! {
         PageBody { class: "lg:grid lg:grid-cols-2 lg:items-start",
@@ -142,17 +145,20 @@ fn GoalsForm(goals: Goals, weight: Option<f64>) -> Element {
                                 Info { label: "Gewicht", value: num(w, 1), unit: "kg" }
                             }
                             Field { label: "Ziel pro Woche",
-                                Segmented {
-                                    options: vec![
-                                        ("-0.75".into(), "−0,75".into()), ("-0.5".into(), "−0,5".into()), ("-0.25".into(), "−0,25".into()),
-                                        ("0".into(), "Halten".into()), ("0.25".into(), "+0,25".into()),
-                                    ],
-                                    value: weekly_key.to_string(),
-                                    onchange: move |v| weekly.set(v),
+                                div { class: "grid grid-cols-4 gap-1.5",
+                                    for (k, l) in [("-2", "−2"), ("-1.5", "−1,5"), ("-1", "−1"), ("-0.75", "−0,75"), ("-0.5", "−0,5"), ("-0.25", "−0,25"), ("0", "Halten"), ("0.25", "+0,25")] {
+                                        button {
+                                            key: "{k}",
+                                            r#type: "button",
+                                            class: if (weekly_v - k.parse::<f64>().unwrap_or(0.0)).abs() < 0.01 { "h-10 rounded-xl bg-primary text-sm font-semibold text-primary-foreground" } else { "h-10 rounded-xl bg-muted text-sm text-muted-foreground" },
+                                            onclick: move |_| weekly.set(k.to_string()),
+                                            "{l}"
+                                        }
+                                    }
                                 }
                             }
                             p { class: "text-xs text-muted-foreground",
-                                "kg pro Woche · ≈ {int(t + weekly_v * 1100.0)} kcal pro Tag"
+                                "kg pro Woche · ≈ {int((t + weekly_v * 1100.0).max(800.0))} kcal pro Tag · eigener Wert weiter unten"
                             }
                             Button { variant: ButtonVariant::Secondary, onclick: apply, Sparkles { class: "size-4" } "Vorschlag übernehmen" }
                         } else {
@@ -166,6 +172,9 @@ fn GoalsForm(goals: Goals, weight: Option<f64>) -> Element {
                     Card { class: "flex flex-col gap-4 p-4",
                         Field { label: "Kalorien pro Tag",
                             NumberInput { value: kcal(), unit: "kcal", integer: true, oninput: move |v| kcal.set(v) }
+                        }
+                        if let Some(r) = hint.clone() {
+                            crate::components::ui::goal_hint::GoalHint { reason: r }
                         }
                         div { class: "grid grid-cols-3 gap-2",
                             Field { label: "Protein · {pct(p(protein) * 4.0)} %", NumberInput { value: protein(), unit: "g", oninput: move |v| protein.set(v) } }

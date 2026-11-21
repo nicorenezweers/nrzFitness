@@ -80,8 +80,8 @@ impl Profile {
 /// Zielvorschlag: kcal = TDEE + Wochenänderung (7700 kcal/kg), Protein 1.8 g/kg, Fett 27 %, Rest Kohlenhydrate.
 pub fn suggested_goals(p: &Profile, weight_kg: f64, weekly_change: f64, base: &Goals) -> Goals {
     let tdee = p.tdee(weight_kg).unwrap_or(2000.0);
-    let floor = if p.sex == "f" { 1200.0 } else { 1500.0 };
-    let kcal = (tdee + weekly_change * 7700.0 / 7.0).max(floor);
+    // Auch sehr ehrgeizige Ziele sind erlaubt (Hinweis über `aggressive_goal`); nur nie unter 800 kcal.
+    let kcal = (tdee + weekly_change * 7700.0 / 7.0).max(800.0);
     let kcal = (kcal / 10.0).round() * 10.0;
     let protein = (weight_kg * if weekly_change < 0.0 { 2.0 } else { 1.8 }).round();
     let fat = (kcal * 0.27 / 9.0).round();
@@ -97,4 +97,37 @@ pub fn suggested_goals(p: &Profile, weight_kg: f64, weekly_change: f64, base: &G
         weekly_change,
         ..base.clone()
     }
+}
+
+/// Empfohlene Untergrenze der Kalorien pro Tag ohne ärztliche Begleitung.
+pub fn kcal_floor(sex: &str) -> f64 {
+    if sex == "f" { 1200.0 } else { 1500.0 }
+}
+
+/// Grund, falls das Ziel deutlich mehr Abnahme bedeutet als empfohlen (für den Info-Hinweis).
+pub fn aggressive_goal(p: Option<&Profile>, weight_kg: Option<f64>, g: &Goals) -> Option<String> {
+    let weekly = -g.weekly_change;
+    if let Some(w) = weight_kg.filter(|w| *w > 0.0)
+        && weekly > 0.0
+        && weekly > w * 0.01 + 0.001
+    {
+        return Some(format!(
+            "{} kg pro Woche sind mehr als 1 % deines Körpergewichts",
+            crate::util::num(weekly, 2)
+        ));
+    }
+    if weekly > 1.0 {
+        return Some(format!("{} kg pro Woche sind mehr als die empfohlenen 0,5–1 kg", crate::util::num(weekly, 2)));
+    }
+    if let Some(p) = p
+        && g.calories > 0.0
+        && g.calories < kcal_floor(&p.sex)
+    {
+        return Some(format!(
+            "{} kcal pro Tag liegen unter den empfohlenen mindestens {} kcal",
+            crate::util::int(g.calories),
+            crate::util::int(kcal_floor(&p.sex))
+        ));
+    }
+    None
 }

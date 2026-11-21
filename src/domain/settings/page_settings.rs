@@ -75,6 +75,9 @@ pub fn SettingsPage() -> Element {
                 }
                 p { class: "px-1 text-xs text-muted-foreground", "Jedes Profil hat eigene Einträge und Ziele. Lebensmittel können geteilt werden." }
             }
+            Section { title: "Gesundheits-Apps",
+                crate::domain::settings::health_card::HealthCard {}
+            }
             Section { title: "KI-Assistent",
                 crate::domain::settings::ai_card::AiCard {}
             }

@@ -151,10 +151,17 @@ pub fn Onboarding() -> Element {
                     }
                     Field { label: "Ziel",
                         Segmented {
-                            options: vec![("-0.5".into(), "Abnehmen".into()), ("0".into(), "Halten".into()), ("0.25".into(), "Zunehmen".into())],
+                            options: vec![("-1".into(), "Schnell ab".into()), ("-0.5".into(), "Abnehmen".into()), ("0".into(), "Halten".into()), ("0.25".into(), "Zunehmen".into())],
                             value: goal(),
                             onchange: move |v| goal.set(v),
                         }
+                    }
+                    if let Some(r) = crate::model::aggressive_goal(
+                        None,
+                        parse_num(&weight()),
+                        &crate::model::Goals { weekly_change: goal().parse().unwrap_or(0.0), ..Default::default() },
+                    ) {
+                        crate::components::ui::goal_hint::GoalHint { reason: r }
                     }
                 }
                 if let Some(e) = err() {

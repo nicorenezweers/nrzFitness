@@ -7,6 +7,7 @@ pub mod body;
 pub mod cycle;
 pub mod diary;
 pub mod fasting;
+pub mod health;
 pub mod foods;
 pub mod meds;
 pub mod profile;

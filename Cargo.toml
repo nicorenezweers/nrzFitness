@@ -1,6 +1,6 @@
 [package]
 name = "nrzfitness"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2024"
 description = "nrzFitness – Ernährung, Training, Körper, Fasten und Gesundheit an einem Ort (Dioxus + nrzUI)"
 license = "MIT"
@@ -25,6 +25,9 @@ tokio = { version = "1", features = ["fs", "rt", "macros", "process", "time", "i
 base64 = { version = "0.22", optional = true }
 tracing = { version = "0.1", optional = true }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"], optional = true }
+futures-util = { version = "0.3", default-features = false, optional = true }
+zip = { version = "2", default-features = false, features = ["deflate"], optional = true }
+quick-xml = { version = "0.37", optional = true }
 
 [lints.clippy]
 dbg_macro = "deny"
@@ -34,7 +37,7 @@ await_holding_lock = "deny"
 
 [features]
 default = []
-server = ["dioxus/server", "dep:sqlx", "dep:dotenv", "dep:tokio", "dep:tracing", "dep:reqwest", "dep:base64"]
+server = ["dioxus/server", "dep:sqlx", "dep:dotenv", "dep:tokio", "dep:tracing", "dep:reqwest", "dep:base64", "dep:futures-util", "dep:zip", "dep:quick-xml"]
 web = ["dioxus/web"]
 
 [dev-dependencies]

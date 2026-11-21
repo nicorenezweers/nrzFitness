@@ -14,6 +14,7 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
     (20261120000000, "init", INIT),
     (20261121000000, "training", TRAINING),
     (20261122000000, "ai", AI),
+    (20261123000000, "health", HEALTH),
 ];
 
 const INIT: &str = r#"-- nrzFitness: komplettes Schema. Datumsfelder als TEXT 'YYYY-MM-DD', Zeitstempel 'YYYY-MM-DDTHH:MM:SS'.
@@ -270,6 +271,22 @@ CREATE TABLE app_settings (
     value      TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+"#;
+
+const HEALTH: &str = r#"-- Apple Health / Google Health Connect
+ALTER TABLE checkins ADD COLUMN active_kcal REAL;
+ALTER TABLE exercise_entries ADD COLUMN external_id TEXT;
+CREATE INDEX idx_exercise_entries_external ON exercise_entries(profile_id, external_id);
+ALTER TABLE profiles ADD COLUMN health_token TEXT;
+CREATE UNIQUE INDEX idx_profiles_health_token ON profiles(health_token);
+CREATE TABLE health_syncs (
+    id         TEXT PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    source     TEXT NOT NULL,
+    summary    TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX idx_health_syncs_profile ON health_syncs(profile_id, created_at);
 "#;
 
 /// Quelle für `sqlx::migrate::Migrator` aus den eingebetteten Migrationen.

@@ -2,6 +2,7 @@
 
 pub mod ai;
 pub mod db;
+pub mod health;
 pub mod migrations;
 pub mod off;
 
