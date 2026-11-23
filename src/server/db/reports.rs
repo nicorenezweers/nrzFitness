@@ -199,13 +199,13 @@ pub async fn report(
              WHERE profile_id = ?1 AND date BETWEEN ?2 AND ?3 GROUP BY name ORDER BY {order} LIMIT 10"
         )
     };
-    let top_foods_count = sqlx::query_as::<_, TopFood>(&top_sql("count DESC, kcal DESC"))
+    let top_foods_count = sqlx::query_as::<_, TopFood>(sqlx::AssertSqlSafe(top_sql("count DESC, kcal DESC")))
         .bind(pid)
         .bind(from)
         .bind(to)
         .fetch_all(pool)
         .await?;
-    let top_foods_kcal = sqlx::query_as::<_, TopFood>(&top_sql("kcal DESC, count DESC"))
+    let top_foods_kcal = sqlx::query_as::<_, TopFood>(sqlx::AssertSqlSafe(top_sql("kcal DESC, count DESC")))
         .bind(pid)
         .bind(from)
         .bind(to)
@@ -311,7 +311,7 @@ fn quote(ident: &str) -> String {
 
 async fn columns<'e, E: sqlx::Executor<'e, Database = Sqlite>>(ex: E, table: &str) -> AppResult<Vec<Col>> {
     let rows: Vec<(String, i64)> =
-        sqlx::query_as(&format!("SELECT name, pk FROM pragma_table_info({})", quote_str(table))).fetch_all(ex).await?;
+        sqlx::query_as(sqlx::AssertSqlSafe(format!("SELECT name, pk FROM pragma_table_info({})", quote_str(table)))).fetch_all(ex).await?;
     Ok(rows.into_iter().map(|(name, pk)| Col { name, pk: pk > 0 }).collect())
 }
 
@@ -350,10 +350,10 @@ async fn plan(pool: &SqlitePool) -> AppResult<Vec<(String, Kind, String, Vec<Col
 
 async fn json_rows(pool: &SqlitePool, table: &str, cols: &[Col], where_sql: &str, pid: &str) -> AppResult<Vec<Value>> {
     let obj = cols.iter().map(|c| format!("{}, {}", quote_str(&c.name), quote(&c.name))).collect::<Vec<_>>().join(", ");
-    let rows: Vec<String> = sqlx::query_scalar(&format!(
+    let rows: Vec<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT json_object({obj}) FROM {} WHERE {where_sql} ORDER BY rowid",
         quote(table)
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?;
@@ -383,9 +383,9 @@ pub async fn export_json(pool: &SqlitePool, pid: &str) -> AppResult<String> {
 }
 
 fn bind_value<'q>(
-    q: sqlx::query::Query<'q, Sqlite, sqlx::sqlite::SqliteArguments<'q>>,
+    q: sqlx::query::Query<'q, Sqlite, sqlx::sqlite::SqliteArguments>,
     v: &Value,
-) -> sqlx::query::Query<'q, Sqlite, sqlx::sqlite::SqliteArguments<'q>> {
+) -> sqlx::query::Query<'q, Sqlite, sqlx::sqlite::SqliteArguments> {
     match v {
         Value::Null => q.bind(None::<String>),
         Value::Bool(b) => q.bind(i64::from(*b)),
@@ -473,7 +473,7 @@ async fn import_row(
             "UPDATE profiles SET {} WHERE id = ?",
             sets.iter().map(|(k, _)| format!("{} = ?", quote(k))).collect::<Vec<_>>().join(", ")
         );
-        let mut q = sqlx::query(&sql);
+        let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str()));
         for (_, v) in &sets {
             q = bind_value(q, v);
         }
@@ -507,7 +507,7 @@ async fn import_row(
                 "INSERT INTO {t} ({col_list}) SELECT {marks} WHERE EXISTS (SELECT 1 FROM {} WHERE id = ? AND profile_id = ?) {on_conflict}",
                 quote(parent)
             );
-            let mut q = sqlx::query(&sql);
+            let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str()));
             for n in &names {
                 q = bind_value(q, &row[n]);
             }
@@ -516,7 +516,7 @@ async fn import_row(
         }
         _ => format!("INSERT INTO {t} ({col_list}) VALUES ({marks}) {on_conflict}"),
     };
-    let mut q = sqlx::query(&sql);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str()));
     for n in &names {
         q = bind_value(q, &row[n]);
     }
@@ -567,7 +567,7 @@ async fn select_json(
 ) -> AppResult<Vec<Value>> {
     let obj = sql_cols.iter().map(|(k, expr)| format!("{}, {expr}", quote_str(k))).collect::<Vec<_>>().join(", ");
     let rows: Vec<String> =
-        sqlx::query_scalar(&format!("SELECT json_object({obj}) {from_where}")).bind(pid).fetch_all(pool).await?;
+        sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT json_object({obj}) {from_where}"))).bind(pid).fetch_all(pool).await?;
     rows.iter().map(|r| serde_json::from_str(r).map_err(|e| AppError::Http(format!("JSON: {e}")))).collect()
 }
 
@@ -663,11 +663,11 @@ mod tests {
     }
 
     async fn exec(pool: &SqlitePool, sql: &str) {
-        sqlx::query(sql).execute(pool).await.expect(sql);
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await.expect(sql);
     }
 
     async fn count(pool: &SqlitePool, sql: &str) -> i64 {
-        sqlx::query_scalar(sql).fetch_one(pool).await.expect(sql)
+        sqlx::query_scalar(sqlx::AssertSqlSafe(sql)).fetch_one(pool).await.expect(sql)
     }
 
     async fn seed(pool: &SqlitePool) {

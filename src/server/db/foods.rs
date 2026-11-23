@@ -13,7 +13,7 @@ const COLS: &str = "f.id, f.name, f.brand, f.barcode, f.unit, f.serving_size, f.
 const VISIBLE: &str = "(f.profile_id IS NULL OR f.profile_id = ?1)";
 
 pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Food> {
-    sqlx::query_as::<_, Food>(&format!("SELECT {COLS} FROM foods f WHERE f.id = ?2"))
+    sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM foods f WHERE f.id = ?2")))
         .bind(pid)
         .bind(id)
         .fetch_optional(pool)
@@ -24,11 +24,11 @@ pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Food> {
 /// Suche in der eigenen Datenbank (Name, Marke, Barcode). Favoriten zuerst.
 pub async fn search(pool: &SqlitePool, pid: &str, q: &str, limit: i64) -> AppResult<Vec<Food>> {
     let like = format!("%{}%", q.trim());
-    Ok(sqlx::query_as::<_, Food>(&format!(
+    Ok(sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM foods f
          WHERE {VISIBLE} AND (f.name LIKE ?2 OR IFNULL(f.brand,'') LIKE ?2 OR IFNULL(f.barcode,'') = ?3)
          ORDER BY favorite DESC, (f.name LIKE ?4) DESC, f.name COLLATE NOCASE LIMIT ?5"
-    ))
+    )))
     .bind(pid)
     .bind(&like)
     .bind(q.trim())
@@ -39,19 +39,19 @@ pub async fn search(pool: &SqlitePool, pid: &str, q: &str, limit: i64) -> AppRes
 }
 
 pub async fn list_all(pool: &SqlitePool, pid: &str) -> AppResult<Vec<Food>> {
-    Ok(sqlx::query_as::<_, Food>(&format!(
+    Ok(sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM foods f WHERE {VISIBLE} ORDER BY f.name COLLATE NOCASE"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?)
 }
 
 pub async fn favorites(pool: &SqlitePool, pid: &str) -> AppResult<Vec<Food>> {
-    Ok(sqlx::query_as::<_, Food>(&format!(
+    Ok(sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM foods f JOIN food_favorites fav ON fav.food_id = f.id AND fav.profile_id = ?1
          ORDER BY f.name COLLATE NOCASE"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?)
@@ -59,12 +59,12 @@ pub async fn favorites(pool: &SqlitePool, pid: &str) -> AppResult<Vec<Food>> {
 
 /// Zuletzt gegessene Lebensmittel (einmalig, neueste zuerst).
 pub async fn recent(pool: &SqlitePool, pid: &str, limit: i64) -> AppResult<Vec<Food>> {
-    Ok(sqlx::query_as::<_, Food>(&format!(
+    Ok(sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM foods f
          JOIN (SELECT food_id, MAX(created_at) AS last FROM food_entries
                WHERE profile_id = ?1 AND food_id IS NOT NULL GROUP BY food_id) r ON r.food_id = f.id
          ORDER BY r.last DESC LIMIT ?2"
-    ))
+    )))
     .bind(pid)
     .bind(limit)
     .fetch_all(pool)
@@ -83,9 +83,9 @@ pub async fn last_amount(pool: &SqlitePool, pid: &str, food_id: &str) -> AppResu
 }
 
 pub async fn by_barcode(pool: &SqlitePool, pid: &str, code: &str) -> AppResult<Option<Food>> {
-    Ok(sqlx::query_as::<_, Food>(&format!(
+    Ok(sqlx::query_as::<_, Food>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM foods f WHERE {VISIBLE} AND f.barcode = ?2 ORDER BY (f.profile_id IS NULL) LIMIT 1"
-    ))
+    )))
     .bind(pid)
     .bind(code.trim())
     .fetch_optional(pool)

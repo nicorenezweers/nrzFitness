@@ -10,7 +10,7 @@ use crate::server::{AppError, AppResult};
 const COLS: &str = "id, start_at, end_at, target_hours, notes";
 
 pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Fast> {
-    sqlx::query_as::<_, Fast>(&format!("SELECT {COLS} FROM fasts WHERE id = ? AND profile_id = ?"))
+    sqlx::query_as::<_, Fast>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM fasts WHERE id = ? AND profile_id = ?")))
         .bind(id)
         .bind(pid)
         .fetch_optional(pool)
@@ -19,9 +19,9 @@ pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Fast> {
 }
 
 pub async fn active(pool: &SqlitePool, pid: &str) -> AppResult<Option<Fast>> {
-    Ok(sqlx::query_as::<_, Fast>(&format!(
+    Ok(sqlx::query_as::<_, Fast>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM fasts WHERE profile_id = ? AND end_at IS NULL ORDER BY start_at DESC LIMIT 1"
-    ))
+    )))
     .bind(pid)
     .fetch_optional(pool)
     .await?)
@@ -29,9 +29,9 @@ pub async fn active(pool: &SqlitePool, pid: &str) -> AppResult<Option<Fast>> {
 
 pub async fn data(pool: &SqlitePool, pid: &str) -> AppResult<FastingData> {
     let active = active(pool, pid).await?;
-    let history = sqlx::query_as::<_, Fast>(&format!(
+    let history = sqlx::query_as::<_, Fast>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM fasts WHERE profile_id = ? AND end_at IS NOT NULL ORDER BY start_at DESC LIMIT 120"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?;

@@ -163,9 +163,9 @@ pub async fn seed_exercises(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 const EX_COLS: &str = "x.id, x.name, x.category, x.muscle, x.equipment, x.met, (x.profile_id IS NOT NULL) AS custom";
 
 pub async fn exercises(pool: &SqlitePool, pid: &str) -> AppResult<Vec<Exercise>> {
-    Ok(sqlx::query_as::<_, Exercise>(&format!(
+    Ok(sqlx::query_as::<_, Exercise>(sqlx::AssertSqlSafe(format!(
         "SELECT {EX_COLS} FROM exercises x WHERE x.profile_id IS NULL OR x.profile_id = ? ORDER BY x.name COLLATE NOCASE"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?)
@@ -173,13 +173,13 @@ pub async fn exercises(pool: &SqlitePool, pid: &str) -> AppResult<Vec<Exercise>>
 
 /// Zuletzt verwendete Übungen (neueste zuerst).
 pub async fn recent(pool: &SqlitePool, pid: &str, limit: i64) -> AppResult<Vec<Exercise>> {
-    Ok(sqlx::query_as::<_, Exercise>(&format!(
+    Ok(sqlx::query_as::<_, Exercise>(sqlx::AssertSqlSafe(format!(
         "SELECT {EX_COLS} FROM exercises x
          JOIN (SELECT exercise_id, MAX(date || ' ' || created_at) AS last FROM exercise_entries
                WHERE profile_id = ?1 AND exercise_id IS NOT NULL GROUP BY exercise_id) r ON r.exercise_id = x.id
          WHERE x.profile_id IS NULL OR x.profile_id = ?1
          ORDER BY r.last DESC LIMIT ?2"
-    ))
+    )))
     .bind(pid)
     .bind(limit)
     .fetch_all(pool)
@@ -187,9 +187,9 @@ pub async fn recent(pool: &SqlitePool, pid: &str, limit: i64) -> AppResult<Vec<E
 }
 
 pub async fn get_exercise(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Exercise> {
-    sqlx::query_as::<_, Exercise>(&format!(
+    sqlx::query_as::<_, Exercise>(sqlx::AssertSqlSafe(format!(
         "SELECT {EX_COLS} FROM exercises x WHERE x.id = ? AND (x.profile_id IS NULL OR x.profile_id = ?)"
-    ))
+    )))
     .bind(id)
     .bind(pid)
     .fetch_optional(pool)
@@ -288,7 +288,7 @@ async fn attach_sets(pool: &SqlitePool, entries: &mut [ExerciseEntry]) -> AppRes
     let sql = format!(
         "SELECT entry_id, id, reps, weight_kg, done FROM exercise_sets WHERE entry_id IN ({marks}) ORDER BY entry_id, position"
     );
-    let mut q = sqlx::query_as::<_, Row>(&sql);
+    let mut q = sqlx::query_as::<_, Row>(sqlx::AssertSqlSafe(sql.as_str()));
     for e in entries.iter() {
         q = q.bind(&e.id);
     }
@@ -308,9 +308,9 @@ async fn attach_sets(pool: &SqlitePool, entries: &mut [ExerciseEntry]) -> AppRes
 }
 
 pub async fn entries(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult<Vec<ExerciseEntry>> {
-    let mut rows = sqlx::query_as::<_, ExerciseEntry>(&format!(
+    let mut rows = sqlx::query_as::<_, ExerciseEntry>(sqlx::AssertSqlSafe(format!(
         "SELECT {ENTRY_COLS} FROM exercise_entries WHERE profile_id = ? AND date = ? ORDER BY created_at, id"
-    ))
+    )))
     .bind(pid)
     .bind(date)
     .fetch_all(pool)
@@ -320,9 +320,9 @@ pub async fn entries(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult
 }
 
 pub async fn get_entry(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<ExerciseEntry> {
-    let e = sqlx::query_as::<_, ExerciseEntry>(&format!(
+    let e = sqlx::query_as::<_, ExerciseEntry>(sqlx::AssertSqlSafe(format!(
         "SELECT {ENTRY_COLS} FROM exercise_entries WHERE id = ? AND profile_id = ?"
-    ))
+    )))
     .bind(id)
     .bind(pid)
     .fetch_optional(pool)
@@ -341,10 +341,10 @@ pub async fn last_entry(
     exercise_id: &str,
     exclude: Option<String>,
 ) -> AppResult<Option<ExerciseEntry>> {
-    let e = sqlx::query_as::<_, ExerciseEntry>(&format!(
+    let e = sqlx::query_as::<_, ExerciseEntry>(sqlx::AssertSqlSafe(format!(
         "SELECT {ENTRY_COLS} FROM exercise_entries WHERE profile_id = ? AND exercise_id = ? AND (? IS NULL OR id <> ?)
          ORDER BY date DESC, created_at DESC LIMIT 1"
-    ))
+    )))
     .bind(pid)
     .bind(exercise_id)
     .bind(&exclude)

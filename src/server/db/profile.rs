@@ -7,13 +7,13 @@ use crate::server::{AppError, AppResult};
 const COLS: &str = "id, name, color, sex, birth_date, height_cm, activity_level, cycle_tracking";
 
 pub async fn list(pool: &SqlitePool) -> AppResult<Vec<Profile>> {
-    Ok(sqlx::query_as::<_, Profile>(&format!("SELECT {COLS} FROM profiles ORDER BY created_at"))
+    Ok(sqlx::query_as::<_, Profile>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM profiles ORDER BY created_at")))
         .fetch_all(pool)
         .await?)
 }
 
 pub async fn get(pool: &SqlitePool, id: &str) -> AppResult<Profile> {
-    sqlx::query_as::<_, Profile>(&format!("SELECT {COLS} FROM profiles WHERE id = ?"))
+    sqlx::query_as::<_, Profile>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM profiles WHERE id = ?")))
         .bind(id)
         .fetch_optional(pool)
         .await?

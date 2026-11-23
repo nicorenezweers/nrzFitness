@@ -12,7 +12,7 @@ const COLS: &str =
                     sleep_quality, resting_hr, notes";
 
 pub async fn get(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult<Option<Checkin>> {
-    Ok(sqlx::query_as::<_, Checkin>(&format!("SELECT {COLS} FROM checkins WHERE profile_id = ? AND date = ?"))
+    Ok(sqlx::query_as::<_, Checkin>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM checkins WHERE profile_id = ? AND date = ?")))
         .bind(pid)
         .bind(date)
         .fetch_optional(pool)
@@ -93,9 +93,9 @@ pub async fn overview(pool: &SqlitePool, pid: &str) -> AppResult<BodyOverview> {
     .bind(pid)
     .fetch_all(pool)
     .await?;
-    let recent = sqlx::query_as::<_, Checkin>(&format!(
+    let recent = sqlx::query_as::<_, Checkin>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM checkins WHERE profile_id = ? ORDER BY date DESC LIMIT 30"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?;

@@ -15,9 +15,9 @@ fn valid_meal(meal: &str) -> &str {
 }
 
 pub async fn entries(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult<Vec<FoodEntry>> {
-    Ok(sqlx::query_as::<_, FoodEntry>(&format!(
+    Ok(sqlx::query_as::<_, FoodEntry>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM food_entries WHERE profile_id = ? AND date = ? ORDER BY created_at"
-    ))
+    )))
     .bind(pid)
     .bind(date)
     .fetch_all(pool)
@@ -25,7 +25,7 @@ pub async fn entries(pool: &SqlitePool, pid: &str, date: NaiveDate) -> AppResult
 }
 
 pub async fn get_entry(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<FoodEntry> {
-    sqlx::query_as::<_, FoodEntry>(&format!("SELECT {COLS} FROM food_entries WHERE id = ? AND profile_id = ?"))
+    sqlx::query_as::<_, FoodEntry>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM food_entries WHERE id = ? AND profile_id = ?")))
         .bind(id)
         .bind(pid)
         .fetch_optional(pool)

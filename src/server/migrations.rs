@@ -298,7 +298,7 @@ impl MigrationSource<'static> for Embedded {
         Box::pin(async {
             Ok(MIGRATIONS
                 .iter()
-                .map(|(v, d, sql)| Migration::new(*v, Cow::Borrowed(*d), MigrationType::Simple, Cow::Borrowed(*sql), false))
+                .map(|(v, d, sql)| Migration::new(*v, Cow::Borrowed(*d), MigrationType::Simple, sqlx::SqlStr::from_static(sql), false))
                 .collect())
         })
     }

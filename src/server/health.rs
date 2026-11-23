@@ -147,7 +147,7 @@ fn attrs(e: &quick_xml::events::BytesStart) -> HashMap<String, String> {
         .flatten()
         .filter_map(|a| {
             let k = String::from_utf8_lossy(a.key.as_ref()).to_string();
-            let v = a.unescape_value().ok()?.to_string();
+            let v = a.normalized_value(quick_xml::XmlVersion::Implicit1_0).ok()?.to_string();
             Some((k, v))
         })
         .collect()
@@ -322,7 +322,7 @@ fn read_apple_export(path: &Path, since: Option<NaiveDate>) -> AppResult<HealthI
         let file = std::fs::File::open(path).map_err(io)?;
         let mut zip = zip::ZipArchive::new(file).map_err(|e| AppError::BadRequest(format!("ZIP nicht lesbar: {e}")))?;
         let idx = (0..zip.len())
-            .find(|&i| zip.name_for_index(i).is_some_and(|n| n.ends_with("export.xml") && !n.contains("__MACOSX")))
+            .find(|&i| zip.name_for_index(i).and_then(|r| r.ok()).is_some_and(|n| n.ends_with("export.xml") && !n.contains("__MACOSX")))
             .ok_or_else(|| AppError::BadRequest("Im ZIP fehlt export.xml – ist das ein Apple-Health-Export?".into()))?;
         let entry = zip.by_index(idx).map_err(|e| AppError::BadRequest(format!("ZIP nicht lesbar: {e}")))?;
         parse_apple_xml(BufReader::with_capacity(1 << 20, entry), since)

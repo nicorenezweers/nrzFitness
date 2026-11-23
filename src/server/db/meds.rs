@@ -10,7 +10,7 @@ use crate::server::{AppError, AppResult};
 const COLS: &str = "id, name, dose, times, active, notes, created_at";
 
 pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Medication> {
-    sqlx::query_as::<_, Medication>(&format!("SELECT {COLS} FROM medications WHERE id = ? AND profile_id = ?"))
+    sqlx::query_as::<_, Medication>(sqlx::AssertSqlSafe(format!("SELECT {COLS} FROM medications WHERE id = ? AND profile_id = ?")))
         .bind(id)
         .bind(pid)
         .fetch_optional(pool)
@@ -20,9 +20,9 @@ pub async fn get(pool: &SqlitePool, pid: &str, id: &str) -> AppResult<Medication
 
 /// Medikamente und Protokoll (letzte 30 Tage bis `today` plus `date`).
 pub async fn data(pool: &SqlitePool, pid: &str, date: NaiveDate, today: NaiveDate) -> AppResult<MedsData> {
-    let meds = sqlx::query_as::<_, Medication>(&format!(
+    let meds = sqlx::query_as::<_, Medication>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLS} FROM medications WHERE profile_id = ? ORDER BY active DESC, name COLLATE NOCASE"
-    ))
+    )))
     .bind(pid)
     .fetch_all(pool)
     .await?;
